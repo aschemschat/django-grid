@@ -1,0 +1,239 @@
+/* ======================================================== */
+/* Common-css classes for the filters */
+
+/* Active Filter */
+.grid_filter_active {
+	position: relative;
+}
+
+.grid_filter_active:hover > span {
+	display: block;
+	background-color: white;
+	color: black;	
+}
+
+/* The span containing the infos for this filter. It will be made visible, if the
+mouse hovers over the img */
+.grid_filter_active > span {
+	display: none;
+	position: absolute;
+	top: 0.2em;
+	left: 0.2em;
+	width: 200px;
+	background-color: white;
+	color: black;
+	box-shadow:8px 8px #666; 
+	z-index:1000;
+}
+
+
+
+/* ====================================================== */
+/* Formats for the table of the grid */
+.grid > table {
+    width: 100%;
+}
+
+.grid > table > thead > tr{
+    /*background-color: #464646;*/
+    background-color: grey;
+    border-bottom: 1px solid;
+    font-weight: bold;
+    font-size: 1.0em;
+}
+
+.grid .column_header img {
+    width: 16px;
+    height: 16px;
+}
+
+.grid > table > thead span {
+	color: white;
+	font-weight: bold;
+}
+
+.even {
+    background-color: #D8D8D8 ;
+}
+    
+.odd{
+}
+
+/* This marks the tr-row, if the grid is empty */
+.grid_empty {
+}
+.grid_empty_icon {
+    
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    height: 100px;
+    width: 100px;
+}
+
+/* this will be added to the div, if the grid is loading */
+.grid_loading {
+    background: url('../img/info/loading.gif') no-repeat center center;
+}
+
+/* Added if the grid had an error while loading */
+.grid_error {
+    /*background: url('../img/info/grid_error.png') no-repeat center center;*/
+    width: 100%;
+}
+
+/* by default show all pictures in the grid with 20/20 pixels*/
+.grid img {
+	height: 20px;
+	width: 20px;
+}
+
+/* ======================================================= */
+/* Paginator and extra_filter  */
+
+/* The entire div-box, that contains the utilities */
+.grid_utility {
+	width: 100%;
+    padding: 10px 0px;    
+}
+
+.paginator {  
+    position: relative;
+    display: inline;
+    left: 45%;
+    width: 10%;
+}
+
+.grid_resetter {
+    position: relative;
+    display: inline;
+    left: 20%;
+    width: 10%;
+}
+
+/* The filter that are not associated with a visible column are displayed in this div */
+.extra_filter {
+	position: relative;
+    display: inline;
+	left: 80%;
+    width: 10%;
+}
+
+/* ======================================================= */
+/* Filter-boxes and forms 			*/
+
+/* The entire filterbox */
+.grid_filter_new {
+	display: inline;
+	position: relative;
+}
+
+.grid_filter_new > .grid_filter_form {
+	position: absolute;
+	display: none;
+	background-color: #464646;
+	box-shadow:4px 4px #666; 
+	width: 300px;
+}
+
+.grid_filter_form {
+	z-index: 1000;
+    padding: 3px;
+}
+
+.grid_filter_form > h1 {
+    font-weight: bold;
+    color: white;
+    border-bottom: 1px solid lightgrey;
+    margin: 3px 0px;
+}
+
+.grid_filter_form > .grid_filter_form_mode {
+	display: block;
+    width: 95%;
+    margin: 3px 0px;
+}
+
+.grid_filter_form > .grid_filter_form_input {
+	display: block;
+    width:95%;
+    margin: 3px 0px;
+}
+.grid_filter_form > .grid_filter_form_input_invalid {
+    background-color: #FEC1BA;
+}
+
+.grid_filter_form > .grid_filter_form_buttons {
+    display:block;
+    width:95%;
+}
+
+.grid_filter_form > .grid_filter_form_buttons > .grid_filter_form_add {
+    float: left;
+    padding: 0px 10px;
+}
+
+.grid_filter_form > .grid_filter_form_buttons > .grid_filter_form_cancel {
+    float: left;
+    padding: 0px 10px;
+}
+
+
+
+/*  Css-classes for displaying an on-hover-div inside the grid-columns. The span
+ * is the trigger and displays a div within the column */
+.grid_hiddeninfo {
+}
+
+.grid_hiddeninfo {
+    position: relative;
+}
+
+.grid_hiddeninfo:hover > ul {
+    display: block;
+}
+
+.grid_hiddeninfo > ul {
+    display: none;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    
+    color: white;
+    background-color: #464646;    
+    box-shadow:4px 4px #666; 
+    width: 300px;    
+    z-index: 100;    
+    
+    padding: 5px;
+}
+
+.grid_hiddeninfo > ul > li {
+      border-bottom: 1px solid lightgrey;
+      padding: 2px 0px;
+}
+.grid_hiddeninfo > ul > li:last-child {
+    border-bottom: none;
+}
+
+
+
+
+
+.grid_open_details {
+    width: 16px;
+    height: 16px;
+    border: 0px;
+}
+        
+.grid_icon {
+    width: 16px;
+    height: 16px;
+    border: 0px;
+}
+
+.grid_sort_icon {
+    width: 20px;
+    height: 20px;
+    border: 0px;
+}

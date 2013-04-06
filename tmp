@@ -1,0 +1,279 @@
+ 
+class ChoiceColumn(TextColumn):
+    """ A choice-column is basicly the same as a textcolumn, but the filter will only
+    offer a selectbox to choose from """
+    
+    class Filter(Filter):
+        modes = [Filter.IS]
+        
+        def __init__(self, choices):
+            self.__choices = choices
+        
+        def _render_input(self):
+            # Get the choices. If callable call, otherwise just use (and iterate over them)
+            l = self.__choices
+            choices = l() if callable(l) else l
+            
+            options = u"".join([u"<option value='%s'>%s</option>" % (v, v) for v in choices])
+            input = u"<select class='grid_filter_form_input'>%s</select>" % options    
+            return input
+    
+    def __init__(self, choices, *args, **kw):
+        super(ChoiceColumn, self).__init__(*args, **kw)
+        self._filter = ChoiceColumn.Filter(choices)
+    
+        
+    
+class BooleanColumn(Column):
+    """ Column for displaying a true/false-column """
+    class Filter(Filter):
+        modes = [Filter.IS]
+        
+        def _render_input(self):
+            return u"""<select class='grid_filter_form_input'>
+                        <option value='true'>Ja</option>
+                        <option value='false'>Nein</option>
+                    </select>"""
+        
+        def convert(self, mode, values):
+            """ Convert the only value we have to a pyton-boolean """
+            return [{'mode': mode, 'value': (values[0] in ['true', '1', 't', 'True'])}]
+            
+    
+    """ Column for displaying a boolean value """
+    def __init__(self, *args, **kw):
+        super(BooleanColumn, self).__init__(widthtype=Width.ICON, *args, **kw)
+        self._filter = BooleanColumn.Filter()
+        
+    def _render_data(self, row):
+        value = row.get_value(self.get_id())
+        return u"<img class='column_icon' src='%s'/>" % self.icon("checked" if value else "unchecked")
+        
+       
+class NumberColumn(Column):
+    """ Column for displaying a number """
+    
+    class Filter(Filter):
+        modes = [Filter.IS, Filter.LESS, Filter.LESSEQUAL, Filter.GREATER, Filter.GREATEREQUAL, Filter.BETWEEN]
+        
+        def __init__(self, floating):
+            Filter.__init__(self)
+            self.__floating = floating
+        
+        def convert(self, mode, values):
+            """ If mode is between (-=) split and return two filters """
+            try:
+                # Convert to float or int
+                conversion_method = float if self.__floating else int
+                converted = [conversion_method(x.replace(',','.')) for x in values]
+            except ValueError:
+                raise InvalidFilterException(u"Fehler in Zahl")
+            
+            # return the filter
+            
+            if mode == Filter.BETWEEN:
+                return [{'mode': Filter.GREATEREQUAL.get_id(), 'value': converted[0]}, {'mode': Filter.LESSEQUAL.get_id(), 'value': converted[1]}]
+                
+            else:
+                return [{'mode': mode, 'value': converted[0]}]
+            
+        def _get_regex(self):
+            if self.__floating:
+                return "^-?(?:\d+|\d*\.\d+)$"
+            else:
+                return "^\s*\d+\s*$"
+                
+    
+    def __init__(self, pre_digits=None, digits=None, *args, **kw):
+        """ 
+        @param pre
+        @param digits The amount of digits to print after the ,
+        """
+        super(NumberColumn, self).__init__(*args, **kw)
+        self._filter = NumberColumn.Filter(digits != None)
+        self.__digits = digits
+        self.__pre_digits = pre_digits
+        
+        
+    def _render_data(self, row):
+        value = row.get_value(self.get_id())
+        total_digits = (self.__pre_digits or 0) + (self.__digits or -1) + 1
+        pre = "0%d" % total_digits if total_digits > 1 else ""
+        post = ".%d" % self.__digits if self.__digits else ""
+        type = "f" if self.__digits else "d"
+        format = "%" + pre + post + type
+        
+        if value == None:
+            return ""
+        else:
+            return format % value
+        
+            
+class CurrencyColumn(NumberColumn):
+    """ Column for displaying a currency (in this case german) """
+    def __init__(self, *args, **kw):
+        super(CurrencyColumn, self).__init__(digits=2, *args, **kw)
+        
+    def _render_data(self, row):
+        value = row.get_value(self.get_id())
+        if value == None:
+            return ""
+        else:
+            ret = '{:20,.2f}'.format(value)
+            ret = ret.replace(",", "-")
+            ret = ret.replace(".", ",")
+            ret = ret.replace("-", ".")
+            return ret
+       
+       
+class DateColumn(Column):
+    """ Column for displaying a date/time. If the time-parameter is false, 
+    this will only print the date, otherwise time and date """
+    
+    class Filter(Filter):
+        modes = [Filter.IS, Filter.LESS, Filter.LESSEQUAL, Filter.GREATER, Filter.GREATEREQUAL, Filter.BETWEEN]
+        
+        regex = "^(((?P<day>\d{1,2})\.)?((?P<month>\d{1,2})\.))?(?P<year>\d{4})$"
+        
+        def extract_date(self, value):
+            """ Extract the date from the value. Return-value is a dict with ints or None,
+            if the value is not set
+            """
+            match = re.match(self.regex, value)
+            if not match:
+                raise InvalidFilterException(u"Kein g&uuml;ltiges Datum!")
+            
+            result = match.groupdict()
+            return {'year': int(result['year']),
+                    'month': int(result['month']) if result['month'] else None,
+                    'day': int(result['day']) if result['day'] else None}
+        
+        def generate_date(self, year, month, day, upper=True):
+            """ This will fill the missing values depending on upper and return a new date """
+            if month == None:
+                month = 12 if upper else 1
+            if day == None:
+                day = 31 if upper else 1
+            return date(year, month, day)
+            
+        
+        def convert(self, mode, values):
+            """ Convert the dates to python-objects."""
+            # If between, fill the dates and create 2 new filters
+            if mode == Filter.BETWEEN:
+                lower = self.extract_date(values[0])
+                upper = self.extract_date(values[1])
+                return [{'mode': Filter.GREATEREQUAL.get_id(), 'value': self.generate_date(upper=False, **lower)},
+                        {'mode': Filter.LESSEQUAL.get_id(), 'value': self.generate_date(upper=True, **upper)}]
+                        
+            # if Filtermod is IS, check if day/month are given and filter exact, if not given, filter between lower/upper bounds
+            elif mode == Filter.IS:
+                date = self.extract_date(values[0])
+                
+                if date['day'] and date['month'] and date['year']:
+                    return [{'mode': mode, 'value': self.generate_date(**date)}]
+                else:
+                    return [{'mode': Filter.GREATEREQUAL.get_id(), 'value': self.generate_date(upper=False, **date)},
+                            {'mode': Filter.LESSEQUAL.get_id(), 'value': self.generate_date(upper=True, **date)}]
+                    
+                
+                
+        
+        def _get_regex(self):
+            """ Return the regex for the date. This consists of multiple regexes. The first
+            is a normal date/month/year format, where the the day/montth may consist of 1/2 parts
+            and the year of 2/4 parts.
+            The second just matches a mm.yyyy part and the last just years """
+            return "^((\d{1,2}\.)?(\d{1,2}\.))?(\d{4})$"
+            
+    
+    def __init__(self, *args, **kw):
+        super(DateColumn, self).__init__(*args, **kw)
+        self._filter = DateColumn.Filter()
+        
+    def _render_data(self, row):
+        """ Render the data to be printed as a german-style date """
+        value = row.get_value(self.get_id())
+        if value == None:
+            return ""
+        else:
+            return mark_safe(value.strftime("%d.%m.%Y"))
+    
+    
+class FilterColumn(Column):
+    """ Column that is just used for filtering. It is invisible by default """
+    
+    class Filter(Filter):
+        modes = [Filter.IS]
+    
+    def __init__(self, show=False, *args, **kw):
+        super(FilterColumn, self).__init__(show_filter_if_hidden=show, visible=False, *args, **kw)
+        self._filter = FilterColumn.Filter()
+        
+   
+class ActionColumn(Column):
+    """ Column for specifing actions on the grid (like editing, deleting...)
+    These Actions can take an icon or a text 
+    """
+    
+    def __init__(self, url, icon, icon_disabled=None, classes=None):
+        super(ActionColumn, self).__init__(sortable=False,
+                                           label='',
+                                           classes=classes,
+                                           widthtype=Width.ICON)
+        self._filter = None
+        self.__url = url
+        self.__icon = icon
+        self.__icon_disabled = icon_disabled
+        self.__nullable = (icon_disabled != None)
+        
+    def _render_data(self, row):
+        """ Render the action-button. This will be an a-tag with the url specified in
+        the ctor. if the url is callable, the function will be called and one parameter,
+        the gridrow-object, will be supplied """
+        try:
+            url = (self.__url)(row) if callable(self.__url) else self.__url
+            click = self._onclick()
+            icon = self.__icon() if callable(self.__icon) else self.__icon
+            return mark_safe(u"""<a href="%s" onclick="%s">
+                                  <img class="grid_icon" src="%s"/>
+                                </a>""" % (url, click, icon))
+        except Exception, e:
+            if self.__nullable:
+                return mark_safe(u"""<img class='grid_icon deactivated' src="%s" />""" % self.__icon_disabled)            
+            else:
+                raise
+            
+        
+        
+    def _onclick(self):
+        """ This can return a string, that will be supplied as the onclick-value
+        of the a-tag. By default this returns nothing """
+        return ""
+    
+    
+class EditColumn(ActionColumn):
+    def __init__(self, url, *args, **kw):
+        super(EditColumn, self).__init__(*args,
+                                         url=url,
+                                         icon=lambda: self.icon('column_edit'),
+                                         **kw)
+
+class DeleteColumn(ActionColumn):
+    def __init__(self, url, *args, **kw):
+        super(DeleteColumn, self).__init__(*args,
+                                           url=url,
+                                           icon=lambda: self.icon('column_delete'),
+                                           **kw)
+        
+    
+    def _onclick(self):
+        """override the onclick of the link, to enter a confirmation-box.  """
+        return u"""return hsf.dialogs.confirm_delete(this);""";
+           
+class InfoColumn(ActionColumn):
+    def __init__(self, url, *args, **kw):
+        super(InfoColumn, self).__init__(*args,
+                                         url=url,
+                                         icon=lambda: self.icon('column_info'),
+                                         **kw)

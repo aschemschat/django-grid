@@ -1,0 +1,15 @@
+
+<div id="grid_{{id}}"
+    class="grid {% for css_class in css_classes %}{{css_class}} {% endfor %}">
+    <script type="text/javascript">
+        $(function() {
+            new Grid({
+                    'id': '{{id}}',
+                    'url': '{{url}}',
+                    'error_handler': {{error_handler}},
+                    'extra_callback_params': {{extra_callback_params}},
+                    'preset_filter': {{preset_filter}},
+                });
+        });
+    </script>
+</div>

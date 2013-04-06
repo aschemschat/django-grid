@@ -1,0 +1,91 @@
+{% load i18n %}
+<th 
+    id="{{grid_id}}_{{column_id}}"
+    class="column_header {{classes|join:' '}}" 
+    style="{% for style,value in styles.items %}{{style}}: {{value}}; {% endfor %}">
+    
+    <!-- sorting -->
+    {% if sorted and show_controls %}
+        {% if sorted.current == 1 %}
+            <img class="grid_sort_icon ascending" src="{{STATIC_URL}}/img/grid/sort_asc.png" alt="ascending"/>
+        {% endif %}
+        {% if sorted.current == -1 %}
+            <img class="grid_sort_icon descending" src="{{STATIC_URL}}/img/grid/sort_desc.png" alt="descending"/>
+        {% endif %}
+        	
+        <script type="text/javascript">
+        $(function() {
+           	$('#{{grid_id}}_{{column_id}}').click(function() {
+                getGrid('{{grid_id}}').sort('{{column_id}}', {{sorted.next}});
+                return false;
+            });
+		});
+        </script>
+    {% endif %}
+    
+    
+    <!-- column labels -->
+    <span class="label">    	
+    	{% if label %}<span>{{ label|title }}</span>{%endif%}
+    </span>  
+    
+    
+    <!-- Filters -->
+	{% if filterwidget  and show_controls %}
+	<div class="grid_filter_new">
+		{# Display existing filters #}
+		{% for f in filter %}
+			<a href="javascript://" id="{{grid_id}}_filter_{{f.nr}}" class="grid_filter_active">
+                {% if f.error %}
+                    <img src="{{STATIC_URL}}/img/grid/remove_invalid_filter.png" /> 
+                {% else %}
+                    <img src="{{STATIC_URL}}/img/grid/remove_filter.png" /> 
+                {% endif %}
+				<span>
+					{{f.column_id}} {{f.mode}} {{f.value|join:', '}}
+                    {% if f.error %}({{f.error}}){% endif %}
+				</span>
+			</a> 
+			<script type="text/javascript">
+			$(function() {
+				$("#{{grid_id}}_filter_{{f.nr}}").click(function() {
+					getGrid("{{grid_id}}").removeFilter({{f.nr}});
+					return false;
+				});
+			});
+			
+			</script>
+ 		{% endfor %}
+		
+		{# Display support for adding #}
+        <a href="javascript://">
+            <img id="{{grid_id}}_{{column_id}}_filter_show"
+                    src="{{STATIC_URL}}/img/grid/show_filter.png"
+                    class="grid_filter_show" />
+        </a>
+				
+		<div id="{{grid_id}}_{{column_id}}_filter_form" class="grid_filter_form">
+            <h1>Filter anlegen</h1>
+			{{filterwidget}}
+            <span class="grid_filter_form_buttons">
+                <a href="javascript://"  class="grid_filter_form_add">
+                    <img src="{{STATIC_URL}}/img/grid/add_filter.png" />
+                    hinzuf&uuml;gen
+                </a>
+                <a href="javascript://" class="grid_filter_form_cancel">
+                    <img class="grid_filter_form_cancel" src="{{STATIC_URL}}/img/grid/cancel_add_filter.png" />
+                    abbrechen
+                </a>
+            </span>
+		</div>
+		
+		<script type="text/javascript">
+            $(function() {
+                var filter =  new GridFilter("{{grid_id}}", "{{column_id}}");
+                $("#{{grid_id}}_{{column_id}}_filter_form").data('filter', filter);
+            });
+		</script>
+	</div>
+	{% endif %}
+    
+</th>

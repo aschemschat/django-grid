@@ -1,0 +1,96 @@
+
+<table>
+    <thead>
+        {% for h in head %} {{ h }} {% endfor %}
+    </thead>
+    
+    <tbody>
+        {% for row in rows %}
+        <tr id="grid__{{id}}__{{row.id}}" class="{% cycle odd,even %}">
+            {% for cell in row.data %}{{cell}}{% endfor %}
+        </tr>
+        {% empty %}
+        <tr class="grid_empty" >
+            <td colspan="{{head|length}}">
+                <div>
+                    <img class="grid_empty_icon" src="{{STATIC_URL}}img/grid/grid_empty.png" />
+                </div> 
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Utility-Bar of the grid -->
+<div class="grid_utility">
+    
+    <!-- extra_filter -->
+    {# Sometimes extrafilter shouldnt be shown, because they may not be disabled #}
+    {% if show_controls %}
+    	<div class="extra_filter">
+   		{% for f in extra_filter %}
+			<a href="javascript://" id="{{id}}_filter_{{f.nr}}" class="grid_filter_active">
+				<img src="{{STATIC_URL}}/img/grid/remove_filter.png" />
+				<span>
+					{{f.column_id}} {{f.mode}} {{f.value}}
+				</span>
+			</a> 
+			<script type="text/javascript">
+			$(function() {
+				$("#{{id}}_filter_{{f.nr}}").click(function() {
+					getGrid("{{id}}").removeFilter({{f.nr}});
+					return false;
+				});
+				/*.hover(
+					function() {
+						$(this).children("span").show();
+					},
+					function() {
+						$(this).children("span").hide();
+					});*/
+			});
+			
+		</script>
+ 		{% endfor %}
+   		</div>
+        
+        <div class="grid_resetter">
+            <a onclick="getGrid('{{id}}').reset();">
+                <img class="grid_icon" src="{{STATIC_URL}}img/grid/grid_reset.png" />
+                Zur&uuml;cksetzen
+            </a>
+        </div>
+
+   	{% endif %}
+
+    <!-- Paginator of the grid -->
+    {% if num_pages > 1%}
+    <div class="paginator">
+        {% if not has_prev_page %}
+            <img src="{{STATIC_URL}}/img/grid/page_first_disabled.png" alt="erste Seite"/>
+            <img src="{{STATIC_URL}}/img/grid/page_back_disabled.png" alt="Seite zurueck"/>
+        {% else %}
+            <a href="javascript://" onclick="getGrid('{{id}}').toPage(1)">
+                <img src="{{STATIC_URL}}/img/grid/page_first.png" alt="erste Seite" />
+            </a>
+            <a href="javascript://"  onclick="getGrid('{{id}}').toPage({{current_page}}-1)">
+                <img src="{{STATIC_URL}}/img/grid/page_back.png" alt="Seite vor"/>
+            </a>
+        {% endif %}
+        
+        <span>{{current_page}}/{{num_pages}}</span>
+            
+        {% if not has_next_page %}
+            <img src="{{STATIC_URL}}/img/grid/page_next_disabled.png" alt="letzte Seite"/>
+            <img src="{{STATIC_URL}}/img/grid/page_last_disabled.png" alt="Seite vor"/>
+        {% else %}
+            <a href="javascript://" onclick="getGrid('{{id}}').toPage({{current_page}}+1)"> 
+                <img src="{{STATIC_URL}}/img/grid/page_next.png"  alt="Seite vor" />
+            </a>
+            <a href="javascript://" onclick="getGrid('{{id}}').toPage({{num_pages}})">
+                <img src="{{STATIC_URL}}/img/grid/page_last.png" alt="erste Seite" />
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
